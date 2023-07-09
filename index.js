@@ -6,10 +6,19 @@ import { encode, decode } from "stringstonumbers";
 const config = JSON.parse(fs.readFileSync('config.json'))
 
 const colorArray = [];
-var chunkIdx = 0;
 var packetChunkIdx = 0;
 
+// self explanatory. i recommend leaving it at 252
+const chunkLength = 252
+
+// packetChunks - the image, split into chunks. image is read later from input.png
+var packetChunks = []
+
 // helper functions!
+
+async function sleep(ms) { // im pretty sure you can figure this one out
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 function pad(num, size) { // adds leading zeros. num = number, size = the length you want
     num = num.toString();
@@ -48,21 +57,22 @@ function range(min, max) { // makes an array of numbers between min and max
     }
     const cloud = new ScratchCloud();
 
-    await cloud.login(config.username, new Buffer(config.password,'base64').toString('ascii'));
+    await cloud.login(config.username, new Buffer(config.password, 'base64').toString('utf8'));
 
     const session = cloud.createSession(
         config.id,
         false
     ); // dont use turbowarp
+    console.log('Server up')
 
-    jimp.read("input.png", (err, img) => {
+    jimp.read("input.png", async (err, img) => {
         if (err) throw err;
 
         // image initialization!
         // pixelSize - the size (in pixels) that each pixel on the scratch stage should be.
-        // make sure the pixelSize variable in scratch matches the one here!
         // the higher the value, the lower quality the resulting image,
         // and the faster it renders!
+        // make sure the pixelSize variable in scratch matches the one here!
         const pixelSize = 3
         const width = 480 / pixelSize
         const height = 360 / pixelSize
@@ -76,33 +86,58 @@ function range(min, max) { // makes an array of numbers between min and max
                 colorArray.push(colors) // actual rgb to push
             }
         }
+        console.log('Reading complete')
+        packetChunks = chunkString(colorArray.toString(), (chunkLength * 9))
+        await sleep(250);
+        session.set('inputOrOutput', encode('ch|' + packetChunks.length))
     });
 
-    session.on("set", (name, value) => { // on cloud set
+    session.on("set", async (name, value) => { // on cloud set
         name = name.slice(2, name.length);
-        if (name == 'inputOrOutput') value = decode(value);
+        if (name == 'inputOrOutput') value = decode(value); // so we can read the values
         else {
             console.log(`${name} was set to ${value}.`);
             return; // get input only.
         }
         console.log(`${name} was set to ${value}.`);
-        const chunkLength = 252
-        const packetChunks = chunkString(colorArray.toString(), (chunkLength * 9))
-        const currentPacketChunk = packetChunks[packetChunkIdx]
-        const chunkedPacket = chunkString(currentPacketChunk, chunkLength)
 
+        // chunk handling!
+        // currentPacketChunk - a single packet chunk; contains enough characters to fill 9 -
+        // - cloud variables, or 1 chunk
+        const currentPacketChunk = packetChunks[packetChunkIdx]
+        if (packetChunkIdx > (packetChunks.length) - 1) {
+
+        }
         switch (value) {
             case 'init':
-                chunkIdx = 0;
                 packetChunkIdx = 0;
+                await sleep(250);
+                session.set('inputOrOutput', encode('ch|' + packetChunks.length))
                 break;
             case 'waiting':
+                // waiting for packets
+
+                // chunkedPacket - the chunk split into 9 packets  
+                const chunkedPacket = chunkString(currentPacketChunk, chunkLength)
+                // we're finished when we've got an empty array
+                if (chunkedPacket.length < 1) {
+                    await session.set('inputOrOutput', `${encode('finished')}`)
+                    return;
+                }
                 range(0, 8).forEach((i) => {
+                    // send each packet
                     session.set('output' + ((i % 9) + 1), chunkedPacket[i])
-                    //console.log(chunkedPacket[i])
                 });
+                // finished if we're over our chunk limit
+                if (packetChunkIdx > (packetChunks.length) - 1) {
+                    session.set('inputOrOutput', `${encode('finished')}`)
+                } else {
+                    session.set('inputOrOutput', `${encode('sent')}`)
+                }
                 packetChunkIdx++;
-                if (packetChunkIdx > (packetChunks.length) - 1) chunkIdx++;
+                break;
+            case 'buffer':
+                // just to make sure we don't time out
                 session.set('inputOrOutput', `${encode('sent')}`)
                 break;
         }
