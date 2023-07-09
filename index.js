@@ -7,12 +7,16 @@ const config = JSON.parse(fs.readFileSync('config.json'))
 
 const colorArray = [];
 var packetChunkIdx = 0;
-
 // self explanatory. i recommend leaving it at 252
 const chunkLength = 252
-
 // packetChunks - the image, split into chunks. image is read later from input.png
 var packetChunks = []
+// pixelSize - the size (in pixels) that each pixel on the scratch stage should be.
+// the higher the value, the lower quality the resulting image,
+// and the faster it renders!
+// make sure the pixelSize variable in scratch matches the one here!
+// 6 is usually a good resolution if you want to balance quality and speed
+const pixelSize = 3
 
 // helper functions!
 
@@ -69,11 +73,6 @@ function range(min, max) { // makes an array of numbers between min and max
         if (err) throw err;
 
         // image initialization!
-        // pixelSize - the size (in pixels) that each pixel on the scratch stage should be.
-        // the higher the value, the lower quality the resulting image,
-        // and the faster it renders!
-        // make sure the pixelSize variable in scratch matches the one here!
-        const pixelSize = 3
         const width = 480 / pixelSize
         const height = 360 / pixelSize
         var imgRes = img.resize(width, height) // resized
@@ -89,7 +88,7 @@ function range(min, max) { // makes an array of numbers between min and max
         console.log('Reading complete')
         packetChunks = chunkString(colorArray.toString(), (chunkLength * 9))
         await sleep(250);
-        session.set('inputOrOutput', encode('ch|' + packetChunks.length))
+        session.set('inputOrOutput', encode('ch|' + packetChunks.length)) // send chunks over
     });
 
     session.on("set", async (name, value) => { // on cloud set
