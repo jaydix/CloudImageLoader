@@ -2,6 +2,10 @@ import jimp from "jimp";
 import { ScratchCloud } from "@errorgamer2000/scratch-cloud";
 import * as fs from "node:fs";
 import { encode, decode } from "stringstonumbers";
+
+if (!fs.existsSync('config.json')) {
+    console.error('%cERROR!%c', 'background:red;color:white;')
+}
 const config = JSON.parse(fs.readFileSync('config.json'))
 
 const colorArray = [];
@@ -36,7 +40,9 @@ function range(min, max) { // makes an array of numbers between min and max
 }
 
 (async function () {
-    Array.prototype.toString = function () { // no commas
+    // This is a function I created to convert an array to a string. It returns a string containing every single-
+    // - entry in the array, without anything separating them.
+    Array.prototype.toString = function () {
         var toReturn = '';
         Array.from(this.entries()).forEach((v) => {
             toReturn += v[1];
@@ -51,29 +57,28 @@ function range(min, max) { // makes an array of numbers between min and max
         config.id,
         false
     ); // dont use turbowarp
-    //session.set('output1', '0xFFFFFF0xFFFFFF')
 
-    jimp.read("test.png", (err, img) => { // images!
+    jimp.read("input.png", (err, img) => {
         if (err) throw err;
 
+        // image initialization!
+        // pixelSize - the size (in pixels) that each pixel on the scratch stage should be.
+        // make sure the pixelSize variable in scratch matches the one here!
+        // the higher the value, the lower quality the resulting image,
+        // and the faster it renders!
         const pixelSize = 3
-        const width = 480/pixelSize
-        const height = 360/pixelSize
+        const width = 480 / pixelSize
+        const height = 360 / pixelSize
         var imgRes = img.resize(width, height) // resized
-        imgRes.write('./2.png')
 
+        // Adding colors to the array
         for (var y = 0; y < height; y++) {
             for (var x = 0; x < width; x++) { // one row
                 var colors = jimp.intToRGBA(imgRes.getPixelColor(x, y))
                 colors = `${pad(colors.r, 3)}${pad(colors.g, 3)}${pad(colors.b, 3)}`;// rgb
-                // colors = parseInt(colors)//.toString(16) //hex
-                // colors = pad(colors, 6); // leading 0s
-                //colors = colors.substring(0, 6); // theres... a leading number in some colors
-                colorArray.push(colors) // actual hex to push
+                colorArray.push(colors) // actual rgb to push
             }
         }
-        fs.writeFileSync('test.json', JSON.stringify(colorArray));
-        fs.writeFileSync('test.txt', colorArray.toString());
     });
 
     session.on("set", (name, value) => { // on cloud set
@@ -87,10 +92,7 @@ function range(min, max) { // makes an array of numbers between min and max
         const chunkLength = 252
         const packetChunks = chunkString(colorArray.toString(), (chunkLength * 9))
         const currentPacketChunk = packetChunks[packetChunkIdx]
-        //console.log(packetChunkIdx,currentPacketChunk)
         const chunkedPacket = chunkString(currentPacketChunk, chunkLength)
-        //console.log(chunkedPacket)
-        fs.writeFileSync('chunks.json', JSON.stringify(packetChunks))
 
         switch (value) {
             case 'init':
@@ -103,7 +105,7 @@ function range(min, max) { // makes an array of numbers between min and max
                     //console.log(chunkedPacket[i])
                 });
                 packetChunkIdx++;
-                if(packetChunkIdx > (packetChunks.length)-1) chunkIdx++;
+                if (packetChunkIdx > (packetChunks.length) - 1) chunkIdx++;
                 session.set('inputOrOutput', `${encode('sent')}`)
                 break;
         }
