@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "jimp": "^0.22.8",
+    "@errorgamer2000/scratch-cloud": "0.1.0",
+    "stringstonumbers": "^5.1.0"
+  },
+  "scripts":{
+    "start":"npm i && node index.js"
+  },
+  "type": "module"
+}
