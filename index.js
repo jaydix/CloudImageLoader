@@ -48,7 +48,7 @@ function range(min, max) { // makes an array of numbers between min and max
     }
     const cloud = new ScratchCloud();
 
-    await cloud.login(config.username, config.password);
+    await cloud.login(config.username, new Buffer(config.password,'base64').toString('ascii'));
 
     const session = cloud.createSession(
         config.id,
