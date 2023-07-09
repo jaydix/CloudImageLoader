@@ -1,4 +1,4 @@
-# ScratchCloudImageLoader
+# CloudImageLoader
 
  This is a server that lets you render an image from your computer onto Scratch over cloud variables. You can check out [this project](https://scratch.mit.edu/projects/873231212) to see a client example.
 
