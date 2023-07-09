@@ -3,9 +3,6 @@ import { ScratchCloud } from "@errorgamer2000/scratch-cloud";
 import * as fs from "node:fs";
 import { encode, decode } from "stringstonumbers";
 
-if (!fs.existsSync('config.json')) {
-    console.error('%cERROR!%c', 'background:red;color:white;')
-}
 const config = JSON.parse(fs.readFileSync('config.json'))
 
 const colorArray = [];
