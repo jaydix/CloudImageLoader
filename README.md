@@ -32,3 +32,7 @@
 If you've done everything correctly, you should see your image begin to render on the Scratch side!
 
 *Note that the image may tear occasionally due to lag.*
+
+## Common Errors
+ *`Error: Unexpected server response: 502`*
+ Restart the server; I don't think there's much I can do about this.
