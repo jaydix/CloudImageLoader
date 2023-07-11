@@ -6,6 +6,7 @@ import { encode, decode } from "stringstonumbers";
 const config = JSON.parse(fs.readFileSync('config.json'))
 
 const colorArray = [];
+// current packet chunk
 var packetChunkIdx = 0;
 // self explanatory. i recommend leaving it at 252
 const chunkLength = 252
