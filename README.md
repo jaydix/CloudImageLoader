@@ -35,4 +35,4 @@ If you've done everything correctly, you should see your image begin to render o
 
 ## Common Errors
  *`Error: Unexpected server response: 502`*
- This is a problem with the Scratch cloud library I'm using. Restart the server.
+ Restart the server; I don't think there's much I can do about this.
